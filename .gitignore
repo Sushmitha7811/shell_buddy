@@ -1,0 +1,17 @@
+# Python environment and cache
+.mb/
+__pycache__/
+
+# Data (license unclear; recreate with clean_data.py)
+data/
+
+# Models (too big for GitHub)
+shell-buddy-merged/
+shell-buddy-lora/
+shell-buddy-lora-v2/
+*.gguf
+*.safetensors
+*.zip
+
+# Local tool settings
+.claude/

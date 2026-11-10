@@ -1,0 +1,14 @@
+FROM ./shell-buddy-q8_0.gguf
+
+TEMPLATE """{{ if .System }}<|im_start|>system
+{{ .System }}<|im_end|>
+{{ end }}{{ if .Prompt }}<|im_start|>user
+{{ .Prompt }}<|im_end|>
+{{ end }}<|im_start|>assistant
+"""
+
+SYSTEM """You are Shell Buddy. Convert the user's request into a single Linux bash command. Reply with only the command, no explanation and no markdown."""
+
+PARAMETER temperature 0
+PARAMETER num_predict 80
+PARAMETER stop "<|im_end|>"

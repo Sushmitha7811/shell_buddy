@@ -1,0 +1,6 @@
+.mb/
+data/
+shell-buddy-lora/
+shell-buddy-lora-v2/
+*.zip
+__pycache__/
