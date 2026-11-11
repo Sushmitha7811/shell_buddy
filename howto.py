@@ -9,6 +9,10 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
+# Path relative to THIS file, so howto works from any folder
+MODEL_DIR = Path(__file__).resolve().parent / "shell-buddy-merged"
+GATEWAY_URL = os.environ.get("SHELL_BUDDY_GATEWAY")     # public server, e.g. https://x.sslip.io
+KEY_FILE = Path.home() / ".shell_buddy_key"            # API key for the public server
 
 # Path relative to THIS file, so howto works from any folder
 API_URL = os.environ.get("SHELL_BUDDY_URL", "http://127.0.0.1:11434")   # Ollama's port
@@ -60,17 +64,6 @@ def suggest(tokenizer, model, request):
     text = tokenizer.decode(output[0][inputs["input_ids"].shape[1]:], skip_special_tokens=True).strip()
     return text.splitlines()[0].strip() if text else ""
 
-
-# def suggest_via_api(request):
-#     """Ask a running Shell Buddy server. Returns None if no server is reachable."""
-#     body = json.dumps({"request": request}).encode()
-#     req = urllib.request.Request(f"{API_URL}/suggest", data=body, headers={"Content-Type": "application/json"})
-#     try:
-#         with urllib.request.urlopen(req, timeout=30) as resp:
-#             return json.loads(resp.read())["command"]
-#     except (urllib.error.URLError, TimeoutError):
-#         return None
-
 def suggest_via_api(request):
     """Ask Ollama for a command. Returns None if Ollama isn't reachable."""
     body = json.dumps({
@@ -88,6 +81,25 @@ def suggest_via_api(request):
         return None
     return text.splitlines()[0].strip() if text else ""
 
+def suggest_via_gateway(request):
+    """Ask the public Shell Buddy server. Exits with a clear message if it fails."""
+    try:
+        key = KEY_FILE.read_text().strip()
+    except FileNotFoundError:
+        sys.exit(f"No API key found. Save your key in {KEY_FILE}")
+    body = json.dumps({"request": request}).encode()
+    req = urllib.request.Request(f"{GATEWAY_URL}/suggest", data=body,
+                                 headers={"Content-Type": "application/json", "X-API-Key": key})
+    try:
+        with urllib.request.urlopen(req, timeout=60) as resp:
+            return json.loads(resp.read())["command"]
+    except urllib.error.HTTPError as e:   # The server answered, but said no
+        reasons = {401: "your API key was rejected",
+                   429: "too many requests, wait a minute",
+                   503: "the model on the server is unavailable"}
+        sys.exit(f"Shell Buddy server refused: {reasons.get(e.code, f'error {e.code}')}")
+    except (urllib.error.URLError, TimeoutError):   # Couldn't reach the server at all
+        sys.exit(f"Can't reach the Shell Buddy server at {GATEWAY_URL}. Is it running?")
 
 def danger_warnings(cmd):
     return [reason for pattern, reason in DANGER_PATTERNS if re.search(pattern, cmd)]
@@ -116,11 +128,15 @@ def main():
         sys.exit(1)
     request = " ".join(sys.argv[1:])
 
-    cmd = suggest_via_api(request)
-    if cmd is None:
-        print("(Ollama not reachable, loading the model locally...)")
-        tokenizer, model = load()
-        cmd = suggest(tokenizer, model, request)
+    if GATEWAY_URL:
+        cmd = suggest_via_gateway(request)
+    else:
+        cmd = suggest_via_api(request)
+        if cmd is None:
+            print("(Ollama not reachable, loading the model locally...)")
+            tokenizer, model = load()
+            cmd = suggest(tokenizer, model, request)
+
     if not cmd:
         print("Shell Buddy had no suggestion.")
         sys.exit(1)
