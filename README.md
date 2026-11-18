@@ -35,6 +35,14 @@ Open a new terminal and try:
 howto "find all files bigger than 1GB in my home folder"
 ```
 
+### Troubleshooting
+
+| Message | Fix |
+|---|---|
+| `howto: command not found` | `~/.local/bin` isn't in your PATH yet (Ubuntu adds it only if the folder existed when you logged in). Run `echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc && source ~/.bashrc` |
+| `The Shell Buddy model isn't downloaded yet` | Run step 2 again |
+| `Can't reach Ollama` | Start it with `sudo systemctl start ollama` |
+
 Model page: https://huggingface.co/SushmithaJujare/shell-buddy-GGUF
 
 ## Six ways I ran it
