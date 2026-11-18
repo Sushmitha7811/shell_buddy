@@ -9,7 +9,7 @@ RUN pip install --no-cache-dir --upgrade pip
 RUN pip install --no-cache-dir torch==2.14.1 --index-url https://download.pytorch.org/whl/cpu
 
 # 2. Remaining dependencies, pinned
-COPY requirements-server.txt .
+COPY deploy/2-docker-api/requirements-server.txt .
 RUN pip install --no-cache-dir -r requirements-server.txt
 
 # 3. A non-root user to run the app (created BEFORE copying, so it can own the files)
@@ -17,7 +17,7 @@ RUN useradd --create-home appuser
 
 # 4. The model (rarely changes), then the code (changes often)
 COPY --chown=appuser:appuser shell-buddy-merged/ ./shell-buddy-merged/
-COPY --chown=appuser:appuser howto.py server.py ./
+COPY --chown=appuser:appuser howto.py deploy/2-docker-api/server.py ./
 
 USER appuser
 

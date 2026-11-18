@@ -1,0 +1,13 @@
+[Unit]
+Description=Shell Buddy API gateway
+After=network.target ollama.service
+
+[Service]
+User=ubuntu
+WorkingDirectory=/home/ubuntu/gateway
+EnvironmentFile=/etc/shell-buddy.env
+ExecStart=/home/ubuntu/gateway/venv/bin/uvicorn gateway:app --host 127.0.0.1 --port 8000
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

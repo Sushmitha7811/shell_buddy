@@ -1,0 +1,5 @@
+{
+  "temperature": 0,
+  "num_predict": 80,
+  "stop": ["<|im_end|>"]
+}

@@ -1,4 +1,4 @@
-FROM ./shell-buddy-q8_0.gguf
+FROM ../../shell-buddy-q8_0.gguf
 
 TEMPLATE """{{ if .System }}<|im_start|>system
 {{ .System }}<|im_end|>

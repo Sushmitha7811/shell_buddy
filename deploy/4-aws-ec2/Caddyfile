@@ -1,0 +1,6 @@
+<ELASTIC_IP>.sslip.io {
+    request_body {
+        max_size 10KB
+    }
+    reverse_proxy 127.0.0.1:8000
+}
