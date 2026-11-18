@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 """howto: turn an English request into a bash command using the fine-tuned Shell Buddy model."""
 import json
 import os
@@ -16,7 +18,7 @@ KEY_FILE = Path.home() / ".shell_buddy_key"            # API key for the public 
 
 # Path relative to THIS file, so howto works from any folder
 API_URL = os.environ.get("SHELL_BUDDY_URL", "http://127.0.0.1:11434")   # Ollama's port
-OLLAMA_MODEL = os.environ.get("SHELL_BUDDY_MODEL", "shell-buddy")
+OLLAMA_MODEL = os.environ.get("SHELL_BUDDY_MODEL", "hf.co/SushmithaJujare/shell-buddy-GGUF")
 SYSTEM_PROMPT = (
     "You are Shell Buddy. Convert the user's request into a single Linux bash command. "
     "Reply with only the command, no explanation and no markdown."
@@ -77,7 +79,11 @@ def suggest_via_api(request):
     try:
         with urllib.request.urlopen(req, timeout=60) as resp:
             text = json.loads(resp.read())["response"].strip()
-    except (urllib.error.URLError, TimeoutError):
+    except urllib.error.HTTPError as e:   # Ollama is running, but said no
+        if e.code == 404:
+            sys.exit(f"The Shell Buddy model isn't downloaded yet. Run:\n  ollama pull {OLLAMA_MODEL}")
+        sys.exit(f"Ollama returned error {e.code}")
+    except (urllib.error.URLError, TimeoutError):   # Ollama isn't running at all
         return None
     return text.splitlines()[0].strip() if text else ""
 
@@ -137,6 +143,11 @@ def main():
             tokenizer, model = load()
             cmd = suggest(tokenizer, model, request)
 
+    if cmd is None:
+            if not MODEL_DIR.exists():
+                sys.exit("Can't reach Ollama. Install it from https://ollama.com and make sure it's running.")
+            print("(Ollama not reachable, loading the model locally...)")
+    
     if not cmd:
         print("Shell Buddy had no suggestion.")
         sys.exit(1)
